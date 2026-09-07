@@ -15,12 +15,9 @@ constexpr int FLAG_DISABLE_EMULATOR_DETECT = 1 << 5;
 /** Disable libprotector .bitcode CRC / anti-dump map checks (so_guard). */
 constexpr int FLAG_DISABLE_SO_INTEGRITY = 1 << 6;
 
-/**
- * Packer default: disable Root + Emulator (highest false-positive rate on
- * OEM / CI devices). Frida / CRC / anti-debug / Xposed / SO integrity stay on.
- */
+/** RN fork: root on; emulator, legacy port/CRC/debug heuristics removed. */
 constexpr int DEFAULT_RISK_FLAGS =
-        FLAG_DISABLE_ROOT_DETECT | FLAG_DISABLE_EMULATOR_DETECT;
+        FLAG_DISABLE_EMULATOR_DETECT;
 
 class RiskChecker {
 public:
@@ -28,7 +25,7 @@ public:
     virtual void start() {}
 };
 
-/** Frida + libc .text CRC + TracerPid + SO integrity on a background thread. */
+/** Passive Duck evidence + shell integrity on a background thread. */
 class DefaultRiskChecker : public RiskChecker {
 public:
     void start() override;
@@ -38,6 +35,7 @@ RiskChecker& risk_checker();
 
 /** Run a fast Frida/hook screen on the calling thread (init_app / JNI). */
 void scan_hooks_and_frida_now();
+bool can_start_sensitive_operation();
 
 /**
  * Gate for TRUE_VMP interpret(). Returns false when RASP has marked the
@@ -59,7 +57,7 @@ enum class CrashKind {
  * Central RASP gate: respects config.rasp_action
  *   Alert(0)   — log only
  *   Degrade(1) — set environment_degraded only (app may refuse sensitive ops)
- *   Block(2)   — immediate crash_kind
+ *   Block(2)   — compatibility alias for Degrade; never kill a live transport
  */
 void handle_risk(const char* reason, CrashKind kind);
 
@@ -74,7 +72,7 @@ void crash_sigsegv();
 /** abort() → SIGABRT.  Used for signature verification failure. */
 void crash_abort();
 
-/** Infinite busy-loop → ANR / watchdog kill.  Used for junk-code check. */
+/** Legacy fatal loader failure. Aborts instead of spinning indefinitely. */
 void crash_hang();
 
 /** _exit(1) — clean exit, no tombstone.  Used for config integrity. */

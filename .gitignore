@@ -96,3 +96,6 @@ uniapp-demo/unpackage/
 uniapp-demo/README.md.bak
 uniapp-demo-cli/
 
+
+# Per-machine Android configuration
+local.properties

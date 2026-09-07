@@ -65,72 +65,8 @@ PROTECTOR_ENCRYPT void so_guard_init() {
 
     (void)madvise(g_bitcode_addr, g_bitcode_size, MADV_DONTDUMP);
 
-    FILE* st = fopen("/proc/self/status", "r");
-    if (st) {
-        char line[256];
-        int tracer = -1;
-        while (fgets(line, sizeof(line), st)) {
-            if (strncmp(line, "TracerPid:", 10) == 0) {
-                sscanf(line + 10, "%d", &tracer);
-                break;
-            }
-        }
-        fclose(st);
-        if (tracer == 0) {
-            prctl(PR_SET_DUMPABLE, 0);
-        }
-    }
-
     g_so_guard_ready.store(true, std::memory_order_release);
     PLOGI("so_guard ready crc=%08x size=%zu", g_bitcode_crc, g_bitcode_size);
-}
-
-static bool maps_rwx_on_self() {
-    if (g_so_base == 0) return false;
-    FILE* fp = fopen("/proc/self/maps", "r");
-    if (!fp) return false;
-    char line[512];
-    bool hit = false;
-    while (fgets(line, sizeof(line), fp)) {
-        unsigned long start = 0, end = 0;
-        char perms[8] = {0};
-        if (sscanf(line, "%lx-%lx %7s", &start, &end, perms) != 3) continue;
-        bool wx = (strchr(perms, 'w') != nullptr && strchr(perms, 'x') != nullptr);
-        if (!wx) continue;
-        if (strstr(line, "libprotector") != nullptr) {
-            hit = true;
-            break;
-        }
-        if (start >= g_so_base && start < g_so_base + 16ull * 1024 * 1024
-            && end > g_so_base && strstr(line, ".so") != nullptr) {
-            // Anonymous RWX abutting our SO often means inline trampoline.
-            if (strstr(line, "/") == nullptr) {
-                hit = true;
-                break;
-            }
-        }
-    }
-    fclose(fp);
-    return hit;
-}
-
-static bool maps_has_dump_tools() {
-    FILE* fp = fopen("/proc/self/maps", "r");
-    if (!fp) return false;
-    char line[512];
-    bool found = false;
-    while (fgets(line, sizeof(line), fp)) {
-        if (strstr(line, "memdump")
-            || strstr(line, "libGameGuardian")
-            || strstr(line, "frida-gadget")
-            || strstr(line, "frida-agent")
-            || strstr(line, "libdump.so")) {
-            found = true;
-            break;
-        }
-    }
-    fclose(fp);
-    return found;
 }
 
 PROTECTOR_ENCRYPT void so_guard_check() {
@@ -147,16 +83,7 @@ PROTECTOR_ENCRYPT void so_guard_check() {
         }
     }
 
-    if (maps_rwx_on_self()) {
-        PLOGW("so_guard: RWX mapping on libprotector");
-        handle_risk("so_rwx", CrashKind::SigIll);
-        return;
-    }
 
-    if (maps_has_dump_tools()) {
-        PLOGW("so_guard: dump/hook tooling in maps");
-        handle_risk("so_dump_tool", CrashKind::SigSegv);
-    }
 }
 
 } // namespace protector::risk

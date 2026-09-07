@@ -50,6 +50,18 @@ public final class AssetsEncryptor {
      * Encrypt business assets under {@code unpack/assets}. Returns null if nothing encrypted.
      */
     public static Result encryptAll(File unpackRoot, byte[] assetsAesKey) throws Exception {
+        return encrypt(unpackRoot, assetsAesKey, false);
+    }
+
+    public static Result encryptRnBundle(File unpackRoot, byte[] key) throws Exception {
+        if (!new File(unpackRoot, "assets/xop-rn-adapter-v1").isFile()
+                || !new File(unpackRoot, "assets/index.android.bundle").isFile()) {
+            throw new IllegalStateException("RN encryption requires adapter v1 and index.android.bundle");
+        }
+        return encrypt(unpackRoot, key, true);
+    }
+
+    private static Result encrypt(File unpackRoot, byte[] assetsAesKey, boolean rnOnly) throws Exception {
         if (assetsAesKey == null || assetsAesKey.length != 16) {
             throw new IllegalArgumentException("invalid assets AES key");
         }
@@ -91,7 +103,7 @@ public final class AssetsEncryptor {
                 prog.tick();
                 continue;
             }
-            if (shouldSkip(rel)) {
+            if ((rnOnly && !rel.equals("index.android.bundle")) || shouldSkip(rel)) {
                 skipped++;
                 prog.tick();
                 continue;

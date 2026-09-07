@@ -1,0 +1,9 @@
+{
+  "name": "react-native-xop-rasp",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "peerDependencies": {
+    "react-native": "0.68.x"
+  }
+}

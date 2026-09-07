@@ -752,8 +752,7 @@ PROTECTOR_ENCRYPT void init_app(JNIEnv* env, jclass, jstring protector_dir_j) {
     }
 
     // Install ART hooks before parsing/applying code.bin so DefineClass can patch.
-    protector::hook::install_hooks();
-    protector::so::install_business_so_hooks();
+    if (state.config.protect_so) protector::so::install_business_so_hooks();
     // decrypt_already_loaded_async is deferred until after DexMerger (Java calls
     // finishBusinessSoDecrypt) so we do not race ART while mapping dexes.
     std::string code_data = read_file(code_path);
@@ -783,7 +782,16 @@ PROTECTOR_ENCRYPT void init_app(JNIEnv* env, jclass, jstring protector_dir_j) {
         for (size_t i = 0; i < code_data.size(); i++) p[i] = 0;
     }
 
-    if (!protector::vm::prepare_true_vmp_images()) {
+    bool has_protected_methods = false;
+    for (const auto& dex : state.code_map) {
+        if (!dex.second.empty()) { has_protected_methods = true; break; }
+    }
+    // Plain DEX encryption requires a classloader merge, not ART/libc hooks.
+    if (has_protected_methods) protector::hook::install_hooks();
+
+    // DEX-only RN builds have no VM images. A detector restriction must reach
+    // the host operation gate, not an irrelevant VMP failure that exits startup.
+    if (has_protected_methods && !protector::vm::prepare_true_vmp_images()) {
         PLOGE("TRUE_VMP prepare failed");
         protector::risk::crash_exit();
         return;

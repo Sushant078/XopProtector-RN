@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.yqsh.protector"
     compileSdk = 34
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         minSdk = 23
@@ -21,7 +22,7 @@ android {
                 val srcObf = (project.findProperty("protector.srcObf") as String?)
                     ?.equals("false", ignoreCase = true) != true
                 val args = mutableListOf(
-                    "-DANDROID_STL=c++_shared",
+                    "-DANDROID_STL=c++_static",
                     "-DDOBBY_GENERATE_SHARED=OFF",
                     "-DDOBBY_DEBUG=OFF",
                     "-DPROTECTOR_LLVM_OBF=${if (llvmObf) "ON" else "OFF"}",

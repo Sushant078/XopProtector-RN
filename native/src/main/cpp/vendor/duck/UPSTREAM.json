@@ -1,0 +1,30 @@
+{
+  "repository": "https://github.com/eltavine/Duck-Detector-Refactoring",
+  "commit": "c1c8e0c175770c82635b47092ea332a816d2f684",
+  "files": [
+    "memory/common/types.h",
+    "memory/common/maps_reader.h",
+    "memory/common/maps_reader.cpp",
+    "memory/detectors/fd_detector.h",
+    "memory/detectors/fd_detector.cpp",
+    "memory/detectors/signal_detector.h",
+    "memory/detectors/signal_detector.cpp",
+    "nativeroot/common/types.h",
+    "nativeroot/common/io_utils.h",
+    "nativeroot/common/io_utils.cpp",
+    "nativeroot/probes/self_process_ioc_probe.h",
+    "nativeroot/probes/self_process_ioc_probe.cpp",
+    "nativeroot/probes/path_probe.h",
+    "nativeroot/probes/path_probe.cpp",
+    "nativeroot/probes/property_probe.h",
+    "nativeroot/probes/property_probe.cpp",
+    "lsposed/common/types.h",
+    "lsposed/probes/maps_probe.h",
+    "lsposed/probes/maps_probe.cpp",
+    "nativeroot/probes/process_probe.cpp",
+    "nativeroot/probes/process_probe.h",
+    "nativeroot/probes/kernel_probe.cpp",
+    "nativeroot/probes/kernel_probe.h"
+  ],
+  "scope": "Passive subset only. See doc/react-native-integration.md for exclusions and adaptations."
+}

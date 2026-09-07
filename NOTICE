@@ -18,3 +18,18 @@ distributed with their source trees:
 
   - nlohmann/json (and other vendored headers under native/src/main/cpp/external/)
     See license headers in the respective source files.
+
+React Native fork additions (2026):
+  Maintained by Sushant078; independent of the upstream projects.
+
+  - Duck Detector Refactoring, by eltavine and upstream contributors
+    https://github.com/eltavine/Duck-Detector-Refactoring
+    Imported revision c1c8e0c175770c82635b47092ea332a816d2f684.
+    Selected passive probes; not the complete Duck application.
+    License: native/src/main/cpp/vendor/duck/LICENSE (Apache-2.0).
+    Changes/provenance: native/src/main/cpp/vendor/duck/UPSTREAM.json.
+
+  - React Native, Meta Platforms, Inc. and affiliates / contributors
+    https://github.com/facebook/react-native
+    Host builder adapted for React Native 0.68.
+    License: react-native/REACT_NATIVE_LICENSE (MIT).

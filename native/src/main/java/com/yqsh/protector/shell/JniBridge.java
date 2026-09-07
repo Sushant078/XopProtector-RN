@@ -38,8 +38,7 @@ public final class JniBridge {
     /** Verify APK signing certificate SHA-256 against config.app_sign_sha256. */
     public static native void verifySignature(android.content.Context context);
 
-    /** Java→Native heartbeat.  Call periodically (~5 s).  If calls stop
-     *  for > 15 s the native risk thread will kill the process. */
+    /** Compatibility heartbeat; process suspension is not treated as tampering. */
     public static native void heartbeat();
 
     /**
@@ -47,6 +46,9 @@ public final class JniBridge {
      * Apps can refuse high-risk operations without killing the process.
      */
     public static native boolean isEnvironmentDegraded();
+
+    /** Fresh native check at the start of a vehicle operation. Never aborts an active operation. */
+    public static native boolean canStartSensitiveOperation();
 
     /**
      * Drain pending threat events as a JSON array
@@ -78,7 +80,7 @@ public final class JniBridge {
 
     /**
      * Report a threat reason through the native RASP gate ({@code handle_risk}).
-     * Honours {@code rasp_action}: Alert / Degrade / Block.
+     * Honours reporting or restriction policy. Never deliberately kills on a finding.
      */
     public static native void reportThreat(String reason);
 }

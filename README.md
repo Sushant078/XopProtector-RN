@@ -1,3 +1,46 @@
+# XopProtector-RN
+
+Experimental Android protection fork maintained by [Sushant078](https://github.com/Sushant078),
+adding a React Native 0.68 / Hermes adapter and selected passive Duck Detector checks.
+This is an independent fork, not an official release or endorsement by either upstream project.
+
+## Credits and licensing
+
+- **[xopJack/XopProtector](https://github.com/xopJack/XopProtector)** supplies the
+  original packer, native shell, DEX loading architecture and protection machinery.
+  Fork base: `a6c30b24ccdb844ac3a4e666af25fcbc36ace372`.
+- **[eltavine/Duck-Detector-Refactoring](https://github.com/eltavine/Duck-Detector-Refactoring)**
+  supplies the selected passive native detection probes. Imported revision:
+  `c1c8e0c175770c82635b47092ea332a816d2f684`. Upstream copyright headers and
+  [Apache-2.0 license](native/src/main/cpp/vendor/duck/LICENSE) are retained.
+  [Import provenance](native/src/main/cpp/vendor/duck/UPSTREAM.json) records the files and adaptation.
+- The React Native host adapter includes code adapted from React Native 0.68 under
+  its [MIT license](react-native/REACT_NATIVE_LICENSE).
+
+See [NOTICE](NOTICE) for these and the existing native dependencies.
+
+## Current behavior
+
+- Encrypts original DEX and the Hermes bundle; keeps other host assets and native libraries unchanged.
+- Adds a reusable Android RN module and native operation-gate API.
+- Uses selected passive Duck probes in place of the old environmental RASP/root heuristics.
+- Defaults to **report-only**. The wrapper disables method hollowing, VMP and host native-library encryption.
+- Does not classify USB attachment or ADB enablement alone as an attack.
+
+**Experimental, not production-qualified.** Late attachment through
+Frida's Java bridge still crashes the protected test host in both modes; the
+underlying cause is unresolved. APK-local keys are recoverable, and decrypted
+DEX/bundle files exist in private storage at runtime. Protection raises analysis
+cost; it does not guarantee code secrecy or survival under instrumentation.
+
+[Integration, builds, policy and limitations](doc/react-native-integration.md) ·
+[Changes from upstream](CHANGES-RN.md) · [RN adapter](react-native/)
+
+The original README is retained below for upstream context. It describes features
+that are **not all enabled** by `scripts/protect-rn.py`.
+
+---
+
 # XopProtector
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)

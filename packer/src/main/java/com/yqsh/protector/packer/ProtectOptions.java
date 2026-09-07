@@ -104,10 +104,10 @@ public final class ProtectOptions {
     public String applicationOverride;
     public String certSha256Override;
 
-    /** Default: disable Root+Emulator (16|32). */
-    public int riskFlags = 16 | 32;
-    /** 0=alert, 1=degrade, 2=block. */
-    public int raspAction = 2;
+    /** Default: root enabled; emulator not classified (legacy bit 32). */
+    public int riskFlags = 32;
+    /** 0=report, 1/2=restrict new sensitive operations; no detector-induced exit. */
+    public int raspAction = 1;
     public boolean reportEnabled = true;
 
     /** Null = leave output unsigned. */
@@ -128,6 +128,8 @@ public final class ProtectOptions {
      * Default off. CLI: {@code --encrypt-assets}.
      */
     public boolean encryptAssets;
+    /** Only index.android.bundle; requires the RN adapter marker. */
+    public boolean encryptRnBundle;
 
     /**
      * Phase 3 — proxy/VPN detect + optional cert pin list.

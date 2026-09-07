@@ -42,9 +42,9 @@ struct CodeItem {
 enum class RaspAction : int {
     /** Log only — never crash (demo / low false-positive). */
     Alert = 0,
-    /** Mark degraded + schedule delayed crash (softer than immediate kill). */
+    /** Latch restriction; the host rejects new sensitive operations. */
     Degrade = 1,
-    /** Immediate process termination via crash_* paths. */
+    /** Legacy value: latch restriction, never kill from a detector finding. */
     Block = 2,
 };
 
@@ -68,11 +68,11 @@ struct ShellConfig {
     std::vector<uint8_t> assets_aes_key;
     /**
      * Bitmask of FLAG_DISABLE_* from risk.h.
-     * Default 48 = disable Root(16)+Emulator(32) until config.json loads.
+     * Default 32: root checks enabled; emulator classification is not used.
      */
-    std::atomic<int> risk_flags{48};
-    /** How to react when a detector fires. Default Block. */
-    std::atomic<int> rasp_action{static_cast<int>(RaspAction::Block)};
+    std::atomic<int> risk_flags{32};
+    /** How to react when a detector fires. Default restriction without process termination. */
+    std::atomic<int> rasp_action{static_cast<int>(RaspAction::Degrade)};
     /** Lowercase hex SHA-256 of APK signing cert; empty = fail closed. */
     std::string app_sign_sha256;
     /** Packer wrote sokeys.bin (--protect-so); missing keys at init is fatal. */

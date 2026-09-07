@@ -59,7 +59,7 @@ tasks.register("exportShellFiles") {
         tmpDexDir.mkdirs()
 
         exec {
-            commandLine(d8.absolutePath, "--output", tmpDexDir.absolutePath, jar.absolutePath)
+            commandLine(d8.absolutePath, "--min-api", "23", "--lib", File(sdkDir, "platforms/android-34/android.jar").absolutePath, "--output", tmpDexDir.absolutePath, jar.absolutePath)
         }
         val produced = tmpDexDir.listFiles()?.firstOrNull { it.name.endsWith(".dex") }
             ?: throw GradleException("d8 did not produce dex")

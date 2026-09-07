@@ -50,6 +50,17 @@ add_library(protector SHARED
         runtime/engine.cpp
         jni/jni_bridge.cpp
         risk/risk.cpp
+        risk/duck_detector.cpp
+        vendor/duck/nativeroot/probes/process_probe.cpp
+        vendor/duck/nativeroot/probes/kernel_probe.cpp
+        vendor/duck/memory/common/maps_reader.cpp
+        vendor/duck/memory/detectors/fd_detector.cpp
+        vendor/duck/memory/detectors/signal_detector.cpp
+        vendor/duck/nativeroot/common/io_utils.cpp
+        vendor/duck/nativeroot/probes/self_process_ioc_probe.cpp
+        vendor/duck/nativeroot/probes/path_probe.cpp
+        vendor/duck/nativeroot/probes/property_probe.cpp
+        vendor/duck/lsposed/probes/maps_probe.cpp
         risk/so_guard.cpp
         report/threat_report.cpp
         crypto/dex_asset.cpp
@@ -60,6 +71,7 @@ add_library(protector SHARED
 )
 
 target_include_directories(protector PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/duck
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/Dobby/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/bhook/bytehook/src/main/cpp/include
@@ -71,7 +83,7 @@ target_compile_options(protector PRIVATE -Wall -Wextra)
 if (CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
     target_compile_options(protector PRIVATE -mbranch-protection=standard)
 endif()
-target_link_options(protector PRIVATE "-Wl,-z,max-page-size=16384")
+target_link_options(protector PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,--exclude-libs,ALL")
 
 find_library(log-lib log)
 find_library(android-lib android)

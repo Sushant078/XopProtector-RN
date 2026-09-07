@@ -88,15 +88,16 @@ public class PackerMain {
      * risk_flags bitmask (see native risk.h). Default disables Root+Emulator.
      * FLAG_DISABLE_ROOT=16, FLAG_DISABLE_EMULATOR=32 → 48.
      */
-    private int riskFlags = 16 | 32;
+    private int riskFlags = 32;
     /** rasp_action: 0=alert, 1=degrade, 2=block (default). */
-    private int raspAction = 2;
+    private int raspAction = 1;
     /** Write threats.log / ring buffer (default on). */
     private boolean reportEnabled = true;
     /** Encrypt business lib/*.so .text (default on; disable with --no-protect-so). */
     private boolean protectSo = true;
     /** Phase 2A: encrypt assets/** into protector/aenc (default off). */
     private boolean encryptAssets = false;
+    private boolean encryptRnBundle = false;
     /** Phase 2B: shorten res/ paths + rewrite resources.arsc (default off). */
     private boolean enableResProtect = false;
     /** Phase 3: proxy/VPN heuristics (default off). */
@@ -149,7 +150,8 @@ public class PackerMain {
         paymentAutoVmpFromCli = autoVmp.paymentFromCli;
         industryAutoVmpFromCli = autoVmp.industryFromCli;
         protectSo = options.protectSo;
-        encryptAssets = options.encryptAssets;
+        encryptAssets = options.encryptAssets || options.encryptRnBundle;
+        encryptRnBundle = options.encryptRnBundle;
         enableResProtect = options.enableResProtect;
         detectProxy = options.detectProxy || options.enableNetGuard;
         pinCertSha256.clear();
@@ -349,6 +351,7 @@ public class PackerMain {
         System.err.println("  --auto-true-vmp    payment|industry|both|off (fine-grained flags override)");
         System.err.println("  --protect-so       RC4 .text of business SOs (default ON)");
         System.err.println("  --no-protect-so    disable business SO .text encryption");
+        System.err.println("  --encrypt-rn-bundle encrypt only index.android.bundle; requires RN adapter v1");
         System.err.println("  --encrypt-assets   AES-GCM encrypt assets/** → protector/aenc (default OFF)");
         System.err.println("  --no-encrypt-assets disable assets encryption");
         System.err.println("  --enable-res-protect shorten res/ paths + rewrite resources.arsc (default OFF)");
@@ -369,8 +372,8 @@ public class PackerMain {
         System.err.println("  --so-decrypt-mode  eager (default)=full materialize+preload at cold start;");
         System.err.println("                     lazy=on-demand + background fill (so_plain_ready warm reuse)");
         System.err.println("                     Prefer loadLibrary after Application attach.");
-        System.err.println("  --risk-flags      bitmask (default 48 = disable Root+Emulator)");
-        System.err.println("  --rasp-action     0=alert 1=degrade 2=block (default 2)");
+        System.err.println("  --risk-flags      bitmask (default 32; root on; legacy CRC/debug/emulator probes removed)");
+        System.err.println("  --rasp-action     0=report 1=restrict 2=restrict (default 1; never kill on a finding)");
         System.err.println("  --report-enabled  threat log/ring (default 1)");
         System.err.println("  --json-progress   emit NDJSON progress events on stdout (desktop UI)");
         System.err.println("Default: output is aligned but UNSIGNED. Pass --keystore to sign.");
@@ -391,6 +394,7 @@ public class PackerMain {
         Boolean reportEnabledOverride = null;
         boolean protectSo = true;
         boolean encryptAssetsFlag = false;
+        boolean encryptRnBundleFlag = false;
         boolean enableResProtectFlag = false;
         boolean detectProxyFlag = false;
         List<String> pinCerts = new ArrayList<>();
@@ -443,6 +447,8 @@ public class PackerMain {
                 protectSo = true;
             } else if ("--no-protect-so".equals(args[i])) {
                 protectSo = false;
+            } else if ("--encrypt-rn-bundle".equals(args[i])) {
+                encryptRnBundleFlag = true;
             } else if ("--encrypt-assets".equals(args[i])) {
                 encryptAssetsFlag = true;
             } else if ("--no-encrypt-assets".equals(args[i])) {
@@ -537,6 +543,8 @@ public class PackerMain {
         options.industryAutoVmp = industryAutoVmp;
         options.protectSo = protectSo;
         options.encryptAssets = encryptAssetsFlag;
+        options.encryptRnBundle = encryptRnBundleFlag;
+        if (encryptAssetsFlag && encryptRnBundleFlag) throw new IllegalArgumentException("Choose RN bundle encryption or all-assets encryption, not both");
         options.enableResProtect = enableResProtectFlag;
         options.detectProxy = detectProxyFlag;
         options.enableNetGuard = detectProxyFlag || !pinCerts.isEmpty();
@@ -760,7 +768,7 @@ public class PackerMain {
                 phase("encrypt_assets", "Encrypting app assets", 55);
                 assetsAesKey = new byte[16];
                 new SecureRandom().nextBytes(assetsAesKey);
-                AssetsEncryptor.Result ar = AssetsEncryptor.encryptAll(unpack, assetsAesKey);
+                AssetsEncryptor.Result ar = encryptRnBundle ? AssetsEncryptor.encryptRnBundle(unpack, assetsAesKey) : AssetsEncryptor.encryptAll(unpack, assetsAesKey);
                 assetsEncrypted = ar.encrypted;
                 System.out.println("Assets encrypt: files=" + ar.encrypted
                         + " skipped=" + ar.skipped);
@@ -921,6 +929,9 @@ public class PackerMain {
                 boolean hasProtector = false;
                 for (File so : sos) {
                     File dest = new File(dstAbi, so.getName());
+                    if (dest.exists() && !java.util.Arrays.equals(Files.readAllBytes(dest.toPath()), Files.readAllBytes(so.toPath()))) {
+                        throw new IllegalStateException("Shell native library collision: " + abi + "/" + so.getName());
+                    }
                     Files.copy(so.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     if ("libprotector.so".equals(so.getName()) && soAesKey != null) {
                         SoSectionEncryptor.encrypt(dest, soAesKey, insnAesKey, dexAesKey,

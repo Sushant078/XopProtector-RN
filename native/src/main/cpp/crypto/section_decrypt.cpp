@@ -167,8 +167,7 @@ void init_protector() {
     runtime_state().sdk_level = android_get_device_api_level();
     // Early bytehook + dlopen hooks so business SOs loaded before initApp
     // are queued / decrypted once sokeys arrive (see --protect-so).
-    protector::hook::ensure_bytehook();
-    protector::so::install_business_so_hooks();
+    // RN fork: wait for authenticated configuration before installing optional hooks.
     // Defer ART hooks to init_app — constructor-time Dobby ELF parse can SEGV on
     // some Android 14 / APEX libart layouts before the process is fully up.
     protector::risk::risk_checker().start();

@@ -81,7 +81,12 @@ static void native_prepatch_extracted(JNIEnv* env, jclass, jstring dir) {
     env->ReleaseStringUTFChars(dir, utf);
 }
 
+static jboolean native_can_start(JNIEnv*, jclass) {
+    return protector::risk::can_start_sensitive_operation() ? JNI_TRUE : JNI_FALSE;
+}
+
 static JNINativeMethod g_methods[] = {
+        {"canStartSensitiveOperation", "()Z", (void*)native_can_start},
         {"initApp", "(Ljava/lang/String;)V", (void*)protector::runtime::init_app},
         {"setNativeLibraryDir", "(Ljava/lang/String;)V", (void*)native_set_native_lib_dir},
         {"enableJunkVerify", "()V", (void*)protector::runtime::enable_junk_verify},
